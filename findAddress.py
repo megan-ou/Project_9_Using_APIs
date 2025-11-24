@@ -32,22 +32,40 @@ def findAddress(lat, lng, key=None):
         return None
 
     #Set up variables for API request (base url, ext, etc) so I don't have to type it in each time.
+    #Originally just api.tomtom.com, but I think I need to specify exactly what type of search I need
+    #to do.
     base_url = "https://api.tomtom.com/search/2/reverseGeocode/"
-    #Given by the site, I am not too sure what this does
     ext = "json"
+
+    #Create an empty DF to add the results to
+    addresses = pd.DataFrame(columns=['address','status_code'])
 
     #Send in request
     for i in range(len(w_lat)):
         #API documentation says position is a comma separated string of latitude and longitude
         #Use fstring to extract each set of coordinates and format into a string
         position = f'{w_lat[i]},{w_lng[i]}'
+        #Format the payload parameters for the query
         payload = {'position': position, 'ext': ext, 'key': key}
         response = requests.get(base_url, params=payload)
-        print(response.status_code)
-        result = response.json()
-        print(result)
 
-    #TODO: add in DF, temp return statement
-    return None
+        if response.status_code == 200:
+            #Only convert the response to json if it is a successful query
+            result = response.json()
 
-findAddress(45.575178, -122.726487)
+            #Format results into a DataFrame and concatenate to the addresses dataframe
+            #Access the specific formatted address in the json output. Specifying index 0 of the
+            # addresses so that we only access the first query result.
+            formatted_result = {'address':result['addresses'][0]['address']['freeformAddress'],
+                                'status_code':response.status_code}
+            temp_results = pd.DataFrame([formatted_result])
+            pd.concat([addresses,temp_results], axis=0)
+
+        else:
+            #Handle unsuccessful queries
+            formatted_result = {'address': None, 'status_code': response.status_code}
+            temp_results = pd.DataFrame([formatted_result])
+            pd.concat([addresses,temp_results], axis=0)
+
+
+    return addresses
