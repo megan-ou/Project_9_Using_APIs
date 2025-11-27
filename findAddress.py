@@ -1,6 +1,7 @@
 import pandas as pd
 import requests
 from toolz import isiterable
+import time
 
 def findAddress(lat, lng, key=None):
     """
@@ -17,12 +18,8 @@ def findAddress(lat, lng, key=None):
     if isiterable(lat) and isiterable(lng):
         if len(lat) != len(lng):
             return None
-        w_lat = lat
-        w_lng = lng
     else:
-        #If lat and lng have one value, force into a tuple
-        w_lat = (lat,)
-        w_lng = (lng,)
+        return None
 
     if key is None:
         #Personal API key generated on TomTom website
@@ -41,10 +38,10 @@ def findAddress(lat, lng, key=None):
     addresses = pd.DataFrame(columns=['address','status_code'])
 
     #Send in request
-    for i in range(len(w_lat)):
+    for i in range(len(lat)):
         #API documentation says position is a comma separated string of latitude and longitude
         #Use fstring to extract each set of coordinates and format into a string
-        position = f'{w_lat[i]},{w_lng[i]}'
+        position = f'{lat[i]},{lng[i]}'
         #Format the payload parameters for the query
         payload = {'position': position, 'ext': ext, 'key': key}
         response = requests.get(base_url, params=payload)
@@ -59,7 +56,7 @@ def findAddress(lat, lng, key=None):
             formatted_result = {'address':result['addresses'][0]['address']['freeformAddress'],
                                 'status_code':response.status_code}
             temp_results = pd.DataFrame([formatted_result])
-            pd.concat([addresses,temp_results], axis=0)
+            addresses = pd.concat([addresses,temp_results], axis=0)
 
         else:
             #Handle unsuccessful queries
@@ -67,5 +64,11 @@ def findAddress(lat, lng, key=None):
             temp_results = pd.DataFrame([formatted_result])
             pd.concat([addresses,temp_results], axis=0)
 
+        #Sleep for 0.5 seconds between requests to fix a lagging error tried first with 2 seconds,
+        # but that took too long to process, and 0.5 seconds works just fine.
+        time.sleep(0.5)
+
+    #Fix indexing because they all become 0 through concatenation.
+    addresses.index = range(0,len(addresses))
 
     return addresses
