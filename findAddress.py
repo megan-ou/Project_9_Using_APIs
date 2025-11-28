@@ -8,13 +8,13 @@ def findAddress(lat, lng, key=None):
     Function that utilizes TomTom's Reverse Geolocating function to find an address based on
     given latitude and longitude coordinates
     Args:
-        lat (float): tuple of latitudinal coordinates
-        lng (float): tuple of longitudinal coordinates
+        lat (tuple): tuple of floats representing latitudinal coordinates
+        lng (tuple): tuple of floats representing longitudinal coordinates
         key (String): API key to use for the query
 
     Returns: DataFrame with two columns containing address and status code
     """
-    #Error checking
+    #Error checking parameters
     if isiterable(lat) and isiterable(lng):
         if len(lat) != len(lng):
             return None
