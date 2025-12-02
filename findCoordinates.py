@@ -7,6 +7,10 @@ import time
 def encodeaddress(addr: str) -> str:
     """
     Replaces special characters in address with hexadecimal equivalents
+    Args:
+        addr (String): string in which characters need replacing
+
+    Returns: reformatted string
     """
     s = str(addr)
     s = s.replace(" ", "%20")
